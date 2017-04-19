@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>船舶位置修正系统</title>
+	<link rel="stylesheet" href="./css/main.css">
+	<script src="/js/socket.io.js"></script>
+	<script src="/js/jquery.js"></script>
+	<script src="/js/chat.js"></script>
+	<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=cU1mt0H6eDeT7stCr52HWzOyjH00dIQg"></script>
+</head>
+<body>
+	<div id="content">
+		<div id="mapcon"></div>
+		<div class="fixbox">
+			<h1 class="fix_head">更新位置信息</h1>
+			<form id="send-form" action="">
+				<p class="fix_group">
+	                <label for="lng" class="fix_lb">东经：</label>
+	                <input id="lng" class="fix_ipt" type="text" name="lng" />
+	            </p>
+	            <p class="fix_group">
+	                <label for="lat" class="fix_lb">北纬：</label>
+	                <input id="lat" class="fix_ipt" type="text" name="lat" />
+	            </p>
+				<input id="send-button" class="fix_sub" type="submit" value="更新">
+			</form>
+		</div>
+		
+	</div>
+	<script>
+	var map = new BMap.Map("mapcon");
+	function processUserInput(chatApp, socket){
+		var lng = $("#lng").val();
+		var lat = $("#lat").val();
+		chatApp.sendMessage(lng,lat);
+			setmap(lng,lat);
+		$("#lng,#lat").val("");
+	}
+	function setmap(lng,lat){
+		var mPoint = new BMap.Point(lng, lat);
+		map.centerAndZoom(mPoint,15);
+		var marker = new BMap.Marker(mPoint);
+		map.addOverlay(marker);
+	}
+	var socket = io.connect();
+	$(document).ready(function(){
+		var chatApp = new Chat(socket);
+		socket.on("update",function(data){
+			setmap(data.lng,data.lat);
+		});
+		setInterval(function(){
+			socket.emit("rooms");
+		},1000);
+		$('#send-message').focus();
+		$('#send-form').submit(function(){
+			processUserInput(chatApp,socket);
+			return false;
+		})
+	})
+	setmap(122.2175, 29.987);
+	</script>
+</body>
+</html>
